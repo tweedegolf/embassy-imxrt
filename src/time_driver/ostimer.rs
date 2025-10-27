@@ -8,6 +8,7 @@ use embassy_time_driver::Driver;
 use embassy_time_queue_utils::Queue;
 
 use super::AlarmState;
+use crate::clocks::config::PoweredClock;
 use crate::clocks::enable;
 use crate::clocks::periph_helpers::{OsEventClockSelect, OsEventConfig};
 use crate::interrupt::InterruptExt;
@@ -69,6 +70,7 @@ impl OsTimer {
         // peripheral.
         enable::<crate::peripherals::OS_EVENT>(&OsEventConfig {
             select: OsEventClockSelect::Lposc,
+            powered: PoweredClock::AlwaysEnabled,
         })
         .expect("ostimer should not fail");
 

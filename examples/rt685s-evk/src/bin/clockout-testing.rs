@@ -3,7 +3,7 @@
 
 use defmt::info;
 use embassy_executor::Spawner;
-use embassy_imxrt::clocks::config::{ClockOutSource, Div8, M4860IrcSelect};
+use embassy_imxrt::clocks::config::{ClockOutSink, Div8, M4860IrcSelect};
 use embassy_time::Timer;
 use {defmt_rtt as _, embassy_imxrt_examples as _, panic_probe as _};
 
@@ -14,17 +14,17 @@ async fn main(_spawner: Spawner) {
 
     // // 16m: works!
     // cfg.clocks.enable_16m_irc = true;
-    // cfg.clocks.clk_out_select = ClockOutSource::M16Irc;
+    // cfg.clocks.clk_out_select = ClockOutSink::M16Irc;
     // cfg.clocks.clk_out_div = Some(Div8::from_raw(1));
 
     // 32k: works!
     // cfg.clocks.enable_32k_clk = true;
-    // cfg.clocks.clk_out_select = ClockOutSource::K32Clk;
+    // cfg.clocks.clk_out_select = ClockOutSink::K32Clk;
     // cfg.clocks.clk_out_div = Some(Div8::from_raw(0));
 
     // 1m: works!
     // cfg.clocks.enable_1m_lposc = true;
-    // cfg.clocks.clk_out_select = ClockOutSource::M1Lposc;
+    // cfg.clocks.clk_out_select = ClockOutSink::M1Lposc;
     // cfg.clocks.clk_out_div = Some(Div8::from_raw(0));
 
     // 48m: weird
@@ -35,16 +35,16 @@ async fn main(_spawner: Spawner) {
     // 60mhz is 6.28MHz
     // cfg.clocks.m4860_irc_select = M4860IrcSelect::Mhz60;
     // cfg.clocks.m4860_irc_select = M4860IrcSelect::Mhz48;
-    // cfg.clocks.clk_out_select = ClockOutSource::M4860Irc;
+    // cfg.clocks.clk_out_select = ClockOutSink::M4860Irc;
     // cfg.clocks.clk_out_div = Some(Div8::from_raw(9));
 
     // MainClk is currently set up to 16mhz irc x 20: works!
-    // cfg.clocks.clk_out_select = ClockOutSource::MainClk;
+    // cfg.clocks.clk_out_select = ClockOutSink::MainClk;
     // cfg.clocks.clk_out_div = Some(Div8::from_raw(19));
 
     // pfd0 (clkout div 20): 15.976, works!
     // pdd0 (clkout div 20, pll 18/34): 8.452
-    cfg.clocks.clk_out_select = ClockOutSource::MainPllClk;
+    cfg.clocks.clk_out_select = ClockOutSink::MainPllClk;
     cfg.clocks.clk_out_div = Some(Div8::from_raw(19));
     {
         let pll = cfg.clocks.main_pll.as_mut().unwrap();
