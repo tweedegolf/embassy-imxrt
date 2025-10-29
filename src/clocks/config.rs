@@ -429,7 +429,7 @@ impl Default for ClockConfig {
             // Don't assume we have an external 32k clock
             enable_32k_clk: None,
             // Enable 16m osc
-            enable_16m_irc: Some(PoweredClock::NormalEnabledDeepSleepDisabled),
+            enable_16m_irc: Some(PoweredClock::AlwaysEnabled),
             // Enable 1m osc
             enable_1m_lposc: Some(PoweredClock::AlwaysEnabled),
             // Select high speed option

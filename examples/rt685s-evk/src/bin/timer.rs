@@ -3,6 +3,7 @@
 
 use defmt::info;
 use embassy_executor::Spawner;
+use embassy_imxrt::clocks::config::PoweredClock;
 use embassy_imxrt::clocks::ClockConfig;
 use embassy_imxrt::timer::{CaptureChEdge, CaptureTimer, CountingTimer};
 use embassy_imxrt::{bind_interrupts, peripherals, timer};
@@ -26,15 +27,19 @@ async fn monitor_task() {
 
 #[embassy_executor::main]
 async fn main(spawner: Spawner) {
-    let mut p = embassy_imxrt::init(Default::default());
+    let mut cfg = embassy_imxrt::config::Config::default();
+    // Ensure the SFRO is enabled
+    cfg.clocks.enable_16m_irc = Some(PoweredClock::AlwaysEnabled);
+
+    let mut p = embassy_imxrt::init(cfg);
 
     spawner.spawn(monitor_task()).unwrap();
 
-    let sfro = ClockConfig::crystal().sfro;
-    let mut tmr1 = CountingTimer::new_blocking(p.CTIMER0_COUNT_CHANNEL0, sfro);
+    // let sfro = ClockConfig::crystal().sfro;
+    let mut tmr1 = CountingTimer::new_blocking(p.CTIMER0_COUNT_CHANNEL0);
 
-    let sfro = ClockConfig::crystal().sfro;
-    let mut tmr2 = CountingTimer::new_async(p.CTIMER1_COUNT_CHANNEL0, sfro, Irqs);
+    // let sfro = ClockConfig::crystal().sfro;
+    let mut tmr2 = CountingTimer::new_async(p.CTIMER1_COUNT_CHANNEL0, Irqs);
 
     tmr1.wait_us(3000000); // 3 seoconds wait
     info!("First Counting timer expired");

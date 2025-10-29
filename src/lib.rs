@@ -199,20 +199,7 @@ pub fn init(config: config::Config) -> Peripherals {
     // Do this first, so that it panics if user is calling `init` a second time
     // before doing anything important.
     let peripherals = Peripherals::take();
-
-    unsafe {
-        if let Err(e) = clocks::init(config.clocks, config.clock_in_select, config.clock_out_select) {
-            error!("unable to initialize Clocks for reason: {:?}", e);
-            // Panic here?
-        }
-        #[cfg(feature = "_time-driver")]
-        time_driver::init(config.time_interrupt_priority);
-        flash::init();
-        dma::init();
-        gpio::init();
-        timer::init();
-    }
-
+    init_without_periphs(config);
     peripherals
 }
 

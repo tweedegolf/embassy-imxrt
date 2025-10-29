@@ -1564,7 +1564,7 @@ impl_perph_clk!(ADC0, Clkctl0, pscctl1, Rstctl0, prstctl1, 16, AdcConfig);
 impl_perph_clk!(CASPER, Clkctl0, pscctl0, Rstctl0, prstctl0, 9, UnimplementedConfig);
 impl_perph_clk!(CRC, Clkctl1, pscctl1, Rstctl1, prstctl1, 16, NoConfig);
 impl_perph_clk!(
-    CTIMER0_COUNT_CHANNEL0,
+    CTIMER0,
     Clkctl1,
     pscctl2,
     Rstctl1,
@@ -1573,7 +1573,7 @@ impl_perph_clk!(
     CtimerConfig
 );
 impl_perph_clk!(
-    CTIMER1_COUNT_CHANNEL0,
+    CTIMER1,
     Clkctl1,
     pscctl2,
     Rstctl1,
@@ -1582,7 +1582,7 @@ impl_perph_clk!(
     CtimerConfig
 );
 impl_perph_clk!(
-    CTIMER2_COUNT_CHANNEL0,
+    CTIMER2,
     Clkctl1,
     pscctl2,
     Rstctl1,
@@ -1591,7 +1591,7 @@ impl_perph_clk!(
     CtimerConfig
 );
 impl_perph_clk!(
-    CTIMER3_COUNT_CHANNEL0,
+    CTIMER3,
     Clkctl1,
     pscctl2,
     Rstctl1,
@@ -1600,7 +1600,7 @@ impl_perph_clk!(
     CtimerConfig
 );
 impl_perph_clk!(
-    CTIMER4_COUNT_CHANNEL0,
+    CTIMER4,
     Clkctl1,
     pscctl2,
     Rstctl1,
