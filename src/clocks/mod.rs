@@ -119,7 +119,7 @@ pub struct StaticClock<const F: u32> {
 
 /// Clock Configuration related error
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub enum ClockError {
     /// The requested configuration was impossible or conflicting
     BadConfiguration {
