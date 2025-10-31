@@ -32,7 +32,12 @@ async fn main(spawner: Spawner) {
 
     let mut p = embassy_imxrt::init(cfg);
 
-    spawner.spawn(monitor_task()).unwrap();
+    // spawner.spawn(monitor_task()).unwrap();
+
+    for _ in 0..100_000 {
+        info!("Hello :)");
+        cortex_m::asm::delay(10_000_000);
+    }
 
     let mut tmr1 = CountingTimer::new_blocking(
         p.CTIMER0.reborrow(),

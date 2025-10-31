@@ -662,47 +662,85 @@ impl ClockOperator<'_> {
     /// PDRUNCFG0[15],        └▶│Divide by 2│─┘
     /// PDSLEEPCFG0[15]         └───────────┘
     /// ```
-    fn ensure_48_60mhz_ffro_active(&mut self, at_level: &PoweredClock) -> Result<u32, ClockError> {
-        match self.clocks._48_60m_irc {
+    fn ensure_48_60mhz_ffro_active(&mut self, _at_level: &PoweredClock) -> Result<u32, ClockError> {
+        //
+        // /!\ WARNING /!\
+        //
+        // By default, the system boots using the FFRO at 48MHz, and both the AHB clock
+        // and FlexSPI (used for XIP) select the FFRO for operation. Modifying these
+        // *while both of those pieces are using it*, is a very risky proposition, and
+        // as of 2025-10-31 I am unsure how to do it right, and doing it as written below
+        // leads to system instability, often causing system instability. For that reason,
+        // right now we just enforce that this is set to the default, AND that this state
+        // is correct.
+        //
+        // We should reconsider this in the future.
+        match self.config.m4860_irc_select {
             M4860IrcSelect::Off => {
-                // Power on FFRO (48/60MHz)
-                self.sysctl0.pdruncfg0_clr().write(|w| w.ffro_pd().clr_pdruncfg0());
+                Err(ClockError::bad_config("FFRO must be fixed at 48mhz"))
+            },
+            M4860IrcSelect::Mhz60(_powered_clock) => {
+                Err(ClockError::bad_config("FFRO must be fixed at 48mhz"))
+            },
+            M4860IrcSelect::Mhz48(powered_clock) => {
+                let good_powered = matches!(powered_clock, PoweredClock::AlwaysEnabled);
+                let good_pdrun = self.sysctl0.pdruncfg0().read().ffro_pd().bit_is_clear();
+                let good_freq = self.clkctl0.ffroctl0().read().trim_range().is_ffro_48mhz();
+                let good_mode = self.clkctl0.ffroctl1().read().update().is_normal_mode();
 
-                // Select the 48/60m_irc clock speed
-                self.clkctl0.ffroctl1().write(|w| w.update().update_safe_mode());
-                let (level, freq) = match self.config.m4860_irc_select {
-                    M4860IrcSelect::Off => {
-                        return Err(ClockError::bad_config("48/60m_irc required but disabled"));
-                    }
-                    M4860IrcSelect::Mhz48(level) => {
-                        assert!(level.meets_requirement_of(at_level), "todo");
-                        self.clkctl0.ffroctl0().write(|w| w.trim_range().ffro_48mhz());
-                        (level, 48_000_000)
-                    }
-                    M4860IrcSelect::Mhz60(level) => {
-                        assert!(level.meets_requirement_of(at_level), "todo");
-                        self.clkctl0.ffroctl0().write(|w| w.trim_range().ffro_60mhz());
-                        (level, 60_000_000)
-                    }
-                };
-                if matches!(level, PoweredClock::AlwaysEnabled) {
-                    self.sysctl0.pdsleepcfg0().modify(|_r, w| w.ffro_pd().clear_bit());
+                let all_good = good_powered && good_pdrun && good_freq && good_mode;
+                if !all_good {
+                    return Err(ClockError::bad_config("FFRO must be fixed at 48mhz"));
                 }
 
-                self.clkctl0.ffroctl1().write(|w| w.update().normal_mode());
-
-                // Delay enough for FFRO to be stable in case it was just powered on
-                // TODO: shorten too-long-wait?
-                cortex_m::asm::delay(WORST_CASE_TICKS_PER_US * 50);
-
-                // NOTE: we know this is always a Some variant
-                self.clocks._48_60m_irc = self.config.m4860_irc_select;
-                Ok(freq)
-            }
-            M4860IrcSelect::Mhz48(level) if level.meets_requirement_of(at_level) => Ok(48_000_000),
-            M4860IrcSelect::Mhz60(level) if level.meets_requirement_of(at_level) => Ok(60_000_000),
-            _ => Err(ClockError::bad_config("48/60m_irc required but disabled")),
+                if !self.sysctl0.pdsleepcfg0().read().ffro_pd().bit_is_clear() {
+                    self.sysctl0.pdsleepcfg0().modify(|_r, w| w.ffro_pd().clear_bit());
+                }
+                self.clocks._48_60m_irc = M4860IrcSelect::Mhz48(PoweredClock::AlwaysEnabled);
+                Ok(48_000_000)
+            },
         }
+
+        // match self.clocks._48_60m_irc {
+        //     M4860IrcSelect::Off => {
+        //         // Power on FFRO (48/60MHz)
+        //         self.sysctl0.pdruncfg0_clr().write(|w| w.ffro_pd().clr_pdruncfg0());
+
+        //         // Select the 48/60m_irc clock speed
+        //         self.clkctl0.ffroctl1().write(|w| w.update().update_safe_mode());
+        //         let (level, freq) = match self.config.m4860_irc_select {
+        //             M4860IrcSelect::Off => {
+        //                 return Err(ClockError::bad_config("48/60m_irc required but disabled"));
+        //             }
+        //             M4860IrcSelect::Mhz48(level) => {
+        //                 assert!(level.meets_requirement_of(at_level), "todo");
+        //                 self.clkctl0.ffroctl0().write(|w| w.trim_range().ffro_48mhz());
+        //                 (level, 48_000_000)
+        //             }
+        //             M4860IrcSelect::Mhz60(level) => {
+        //                 assert!(level.meets_requirement_of(at_level), "todo");
+        //                 self.clkctl0.ffroctl0().write(|w| w.trim_range().ffro_60mhz());
+        //                 (level, 60_000_000)
+        //             }
+        //         };
+        //         if matches!(level, PoweredClock::AlwaysEnabled) {
+        //             self.sysctl0.pdsleepcfg0().modify(|_r, w| w.ffro_pd().clear_bit());
+        //         }
+
+        //         self.clkctl0.ffroctl1().write(|w| w.update().normal_mode());
+
+        //         // Delay enough for FFRO to be stable in case it was just powered on
+        //         // TODO: shorten too-long-wait?
+        //         cortex_m::asm::delay(WORST_CASE_TICKS_PER_US * 50);
+
+        //         // NOTE: we know this is always a Some variant
+        //         self.clocks._48_60m_irc = self.config.m4860_irc_select;
+        //         Ok(freq)
+        //     }
+        //     M4860IrcSelect::Mhz48(level) if level.meets_requirement_of(at_level) => Ok(48_000_000),
+        //     M4860IrcSelect::Mhz60(level) if level.meets_requirement_of(at_level) => Ok(60_000_000),
+        //     _ => Err(ClockError::bad_config("48/60m_irc required but disabled")),
+        // }
     }
 
     /// ```text
