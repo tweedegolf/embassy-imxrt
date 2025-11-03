@@ -32,18 +32,13 @@ async fn main(spawner: Spawner) {
 
     let mut p = embassy_imxrt::init(cfg);
 
-    // spawner.spawn(monitor_task()).unwrap();
-
-    // for _ in 0..100_000 {
-    //     info!("Hello :)");
-    //     cortex_m::asm::delay(10_000_000);
-    // }
+    spawner.spawn(monitor_task()).unwrap();
 
     let mut tmr1 = CountingTimer::new_blocking(
         p.CTIMER0.reborrow(),
         TimerChannelNum::Channel0,
         TimerConfig {
-            source: CTimerSel::FfroClk,
+            source: CTimerSel::SfroClk,
             powered: PoweredClock::AlwaysEnabled,
         },
     );
@@ -52,7 +47,7 @@ async fn main(spawner: Spawner) {
         p.CTIMER1.reborrow(),
         TimerChannelNum::Channel0,
         TimerConfig {
-            source: CTimerSel::FfroClk,
+            source: CTimerSel::SfroClk,
             powered: PoweredClock::AlwaysEnabled,
         },
         Irqs,
@@ -69,7 +64,7 @@ async fn main(spawner: Spawner) {
             p.CTIMER4.reborrow(),
             TimerChannelNum::Channel0,
             TimerConfig {
-                source: CTimerSel::FfroClk,
+                source: CTimerSel::SfroClk,
                 powered: PoweredClock::AlwaysEnabled,
             },
             p.PIO0_5.reborrow(),
@@ -84,7 +79,7 @@ async fn main(spawner: Spawner) {
             p.CTIMER4.reborrow(),
             TimerChannelNum::Channel0,
             TimerConfig {
-                source: CTimerSel::FfroClk,
+                source: CTimerSel::SfroClk,
                 powered: PoweredClock::AlwaysEnabled,
             },
             p.PIO0_5.reborrow(),

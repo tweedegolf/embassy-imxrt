@@ -675,6 +675,10 @@ impl ClockOperator<'_> {
         // is correct.
         //
         // We should reconsider this in the future.
+        //
+        // Update: As of 2025-11-03, I'm guessing the instability I saw was due to modifying
+        // the FFRO while it was driving the FlexSPI. Changing the CPU clock still seems to work
+        // without causing (as loud) of glitches.
         match self.config.m4860_irc_select {
             M4860IrcSelect::Off => {
                 Err(ClockError::bad_config("FFRO must be fixed at 48mhz"))
@@ -701,6 +705,10 @@ impl ClockOperator<'_> {
             },
         }
 
+        // Old behavior, that naiively tries to modify the FFRO. Do NOT re-enable this
+        // without doing... something, to make FlexSPI happy, at least if it is being
+        // used!
+        //
         // match self.clocks._48_60m_irc {
         //     M4860IrcSelect::Off => {
         //         // Power on FFRO (48/60MHz)

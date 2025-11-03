@@ -439,24 +439,24 @@ impl Default for ClockConfig {
             main_pll: Some(MainPll {
                 // Clock power state
                 powered: PoweredClock::AlwaysEnabled,
-                // Select 48/60 div2, e.g. 30MHz
+                // Select LPOsc, 16MHz
                 clock_select: MainPllClockSelect::M16Irc,
-                // 30 x 20: 600MHz
+                // 16 x 20: 320MHz
                 multiplier: 20,
-                // 600 / (18 / 18) = 600MHz
+                // 320 / (18 / 18) = 320MHz
                 pfd0_div: Some(18),
-                // 600 / (18 / 18) = 600MHz
+                // 320 / (18 / 18) = 320MHz
                 pfd1_div: Some(18),
-                // 600 / (18 / 18) = 600MHz
+                // 320 / (18 / 18) = 320MHz
                 pfd2_div: Some(18),
-                // 600 / (18 / 18) = 600MHz
+                // 320 / (18 / 18) = 320MHz
                 pfd3_div: Some(18),
             }),
-            // Select Main PLL Clock, which is at 300MHz
+            // Select Main PLL Clock, which is at 320MHz
             main_clock_select: MainClockSelect::MainPllClk,
-            // HCLK: (300 / (0 + 1)) = 300MHz
+            // HCLK: (320 / (0 + 1)) = 320MHz
             sys_cpu_ahb_div: const { Div8::from_divisor(1).unwrap() },
-            // FRG CLK: (300 / (9 + 1)) = 30MHz
+            // FRG CLK: (320 / (9 + 1)) = 32MHz
             frg_clk_pll_div: const {
                 Some(FrgClockConfig {
                     div: Div8::from_divisor(10).unwrap(),
