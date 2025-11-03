@@ -13,6 +13,7 @@ async fn main(_spawner: Spawner) {
     let embassy_p = embassy_imxrt::init(Default::default());
 
     info!("Initializing GPIO");
+    todo!();
 
     let mut led = gpio::Output::new(
         embassy_p.PIO0_26,
@@ -34,36 +35,36 @@ async fn main(_spawner: Spawner) {
         .set_slew_rate(embassy_imxrt::gpio::SlewRate::Standard)
         .set_pull(embassy_imxrt::gpio::Pull::None);
 
-    let mut clk_out_config = clocks::ClockOutConfig::default_config();
-    if let Err(e) = clk_out_config.enable_and_reset() {
-        error!("Couldn't enable clock out {:?}", e);
-    }
+    // let mut clk_out_config = clocks::ClockOutConfig::default_config();
+    // if let Err(e) = clk_out_config.enable_and_reset() {
+    //     error!("Couldn't enable clock out {:?}", e);
+    // }
 
-    if let Err(e) = clk_out_config.set_clkout_source_and_div(clocks::ClkOutSrc::Lposc, 0) {
-        error!("Couldn't configure clock out {:?}", e);
-    }
-    info!("Clock out to LPOSC so 1MHz");
-    for _i in 0..10 {
-        led.toggle();
-        Timer::after_millis(1000).await;
-    }
+    // if let Err(e) = clk_out_config.set_clkout_source_and_div(clocks::ClkOutSrc::Lposc, 0) {
+    //     error!("Couldn't configure clock out {:?}", e);
+    // }
+    // info!("Clock out to LPOSC so 1MHz");
+    // for _i in 0..10 {
+    //     led.toggle();
+    //     Timer::after_millis(1000).await;
+    // }
 
-    if let Err(e) = clk_out_config.set_clkout_source_and_div(clocks::ClkOutSrc::Sfro, 31) {
-        error!("Couldn't configure clock out {:?}", e);
-    }
-    info!("switched Clock out to SFRO divided by 32 so 500KHz");
-    for _i in 0..10 {
-        led.toggle();
-        Timer::after_millis(1000).await;
-    }
+    // if let Err(e) = clk_out_config.set_clkout_source_and_div(clocks::ClkOutSrc::Sfro, 31) {
+    //     error!("Couldn't configure clock out {:?}", e);
+    // }
+    // info!("switched Clock out to SFRO divided by 32 so 500KHz");
+    // for _i in 0..10 {
+    //     led.toggle();
+    //     Timer::after_millis(1000).await;
+    // }
 
-    if let Err(e) = clk_out_config.set_clkout_source_and_div(clocks::ClkOutSrc::MainClk, 99) {
-        error!("Couldn't configure clockout {:?}", e);
-    }
-    info!("switched Clock out to Main Clk div 100, expecting 5MHz");
-    loop {
-        info!("Toggling LED");
-        led.toggle();
-        Timer::after_millis(1000).await;
-    }
+    // if let Err(e) = clk_out_config.set_clkout_source_and_div(clocks::ClkOutSrc::MainClk, 99) {
+    //     error!("Couldn't configure clockout {:?}", e);
+    // }
+    // info!("switched Clock out to Main Clk div 100, expecting 5MHz");
+    // loop {
+    //     info!("Toggling LED");
+    //     led.toggle();
+    //     Timer::after_millis(1000).await;
+    // }
 }

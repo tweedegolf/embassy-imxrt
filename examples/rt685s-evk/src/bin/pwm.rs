@@ -3,9 +3,10 @@
 
 use defmt::info;
 use embassy_executor::Spawner;
+use embassy_imxrt::clocks::config::PoweredClock;
 use embassy_imxrt::pac;
-use embassy_imxrt::pwm::{CentiPercent, Channel, MicroSeconds, SCTClockSource, SCTPwm};
-use embassy_imxrt::timer::{CTimerPwm, CTimerPwmPeriodChannel};
+use embassy_imxrt::pwm::{CentiPercent, Channel, MicroSeconds, SCTClockSource, SCTPwm, Pwm};
+use embassy_imxrt::timer::{CTimerPwm, CTimerSel, TimerChannelNum, TimerConfig};
 use embassy_time::Timer;
 use {defmt_rtt as _, embassy_imxrt_examples as _, panic_probe as _};
 
@@ -57,13 +58,24 @@ async fn main(_spawner: Spawner) {
 
     info!("PWM test: SCTimer/CTimer based");
 
-    let mut sct0 = SCTPwm::new(p.SCT0, MicroSeconds(10_000), SCTClockSource::Main);
+    let mut sct0 = SCTPwm::new(p.SCT0, MicroSeconds(10_000), SCTClockSource::Ffro48_60Mhz);
 
-    let ctimerperiodchannel = CTimerPwmPeriodChannel::new(p.CTIMER4_COUNT_CHANNEL0, MicroSeconds(10_000)).unwrap();
+    // let ctimerperiodchannel = CTimerPwmPeriodChannel::new(p.CTIMER4_COUNT_CHANNEL0, MicroSeconds(10_000)).unwrap();
 
     // CTIMER4_MAT3 configuration for PIO0_31
     info!("GPIO0_31 is red LED on rt685-evk");
-    let mut ctimer = CTimerPwm::new(p.CTIMER4_COUNT_CHANNEL3, &ctimerperiodchannel, p.PIO0_31).unwrap();
+    let mut ctimer = CTimerPwm::new(
+        p.CTIMER4, // p.CTIMER4_COUNT_CHANNEL3,
+        TimerChannelNum::Channel3,
+        TimerChannelNum::Channel0,
+        p.PIO0_31,
+        TimerConfig {
+            source: CTimerSel::SfroClk,
+            powered: PoweredClock::NormalEnabledDeepSleepDisabled,
+        },
+        MicroSeconds(10_000),
+    )
+    .unwrap();
 
     ctimer.enable(());
 
@@ -71,7 +83,6 @@ async fn main(_spawner: Spawner) {
     // ^-- SCT0 configuration allowed for PIO 0_26
     setup_gpio();
 
-    use embassy_imxrt::pwm::Pwm;
     sct0.enable(Channel::Ch6);
 
     loop {
