@@ -151,7 +151,7 @@ pub(crate) trait SealedSysconPeripheral {
     type SysconPeriphConfig: SPConfHelper;
 
     fn enable_perph_clock();
-    fn reset_perph();
+    fn clear_perph_reset();
     fn disable_perph_clock();
 }
 
@@ -343,7 +343,7 @@ pub(crate) fn enable<T: SysconPeripheral>(cfg: &T::SysconPeriphConfig) -> Result
 /// Peripheral must not be in use.
 pub(crate) fn enable_and_reset<T: SysconPeripheral>(cfg: &T::SysconPeriphConfig) -> Result<u32, ClockError> {
     let freq = enable::<T>(cfg)?;
-    T::reset_perph();
+    T::clear_perph_reset();
     Ok(freq)
 }
 
@@ -1559,7 +1559,8 @@ macro_rules! impl_perph_clk {
                 }
             }
 
-            fn reset_perph() {
+            fn clear_perph_reset
+    () {
                 // SAFETY: unsafe needed to take pointers to Rstctl1 and Clkctl1
                 let rc1 = unsafe { pac::$rstctl::steal() };
 

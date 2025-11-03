@@ -433,7 +433,7 @@ impl Default for ClockConfig {
             // Enable 1m osc
             enable_1m_lposc: Some(PoweredClock::AlwaysEnabled),
             // Select high speed option
-            m4860_irc_select: M4860IrcSelect::Mhz48(PoweredClock::NormalEnabledDeepSleepDisabled),
+            m4860_irc_select: M4860IrcSelect::Mhz48(PoweredClock::AlwaysEnabled),
             // Use the internal osc as the wake clk source
             k32_wake_clk_select: K32WakeClkSelect::K32Lp,
             main_pll: Some(MainPll {

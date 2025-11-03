@@ -18,7 +18,7 @@ use crate::pac;
 /// Trait for peripheral-specific configuration operations
 pub trait SPConfHelper {
     /// This method is called AFTER `T::enable_perph_clock()`, and BEFORE
-    /// `T::reset_perph()`.
+    /// `T::clear_perph_reset()`.
     fn post_enable_config(&self, clocks: &Clocks) -> Result<u32, ClockError>;
 }
 

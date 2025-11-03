@@ -805,6 +805,9 @@ impl<'p> CountingTimer<'p, Blocking> {
         })
         .unwrap();
 
+        T::Interrupt::unpend();
+        unsafe { T::Interrupt::enable() };
+
         Self {
             id: info.module * CHANNEL_PER_MODULE + info.channel,
             clk_freq: freq,

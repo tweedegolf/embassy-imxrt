@@ -34,16 +34,16 @@ async fn main(spawner: Spawner) {
 
     // spawner.spawn(monitor_task()).unwrap();
 
-    for _ in 0..100_000 {
-        info!("Hello :)");
-        cortex_m::asm::delay(10_000_000);
-    }
+    // for _ in 0..100_000 {
+    //     info!("Hello :)");
+    //     cortex_m::asm::delay(10_000_000);
+    // }
 
     let mut tmr1 = CountingTimer::new_blocking(
         p.CTIMER0.reborrow(),
         TimerChannelNum::Channel0,
         TimerConfig {
-            source: CTimerSel::SfroClk,
+            source: CTimerSel::FfroClk,
             powered: PoweredClock::AlwaysEnabled,
         },
     );
@@ -52,13 +52,13 @@ async fn main(spawner: Spawner) {
         p.CTIMER1.reborrow(),
         TimerChannelNum::Channel0,
         TimerConfig {
-            source: CTimerSel::SfroClk,
+            source: CTimerSel::FfroClk,
             powered: PoweredClock::AlwaysEnabled,
         },
         Irqs,
     );
 
-    tmr1.wait_us(3000000); // 3 seoconds wait
+    tmr1.wait_us(3000000); // 3 seconds wait
     info!("First Counting timer expired");
 
     tmr2.wait_us(5000000).await; //  5 seconds wait
@@ -69,7 +69,7 @@ async fn main(spawner: Spawner) {
             p.CTIMER4.reborrow(),
             TimerChannelNum::Channel0,
             TimerConfig {
-                source: CTimerSel::SfroClk,
+                source: CTimerSel::FfroClk,
                 powered: PoweredClock::AlwaysEnabled,
             },
             p.PIO0_5.reborrow(),
@@ -84,7 +84,7 @@ async fn main(spawner: Spawner) {
             p.CTIMER4.reborrow(),
             TimerChannelNum::Channel0,
             TimerConfig {
-                source: CTimerSel::SfroClk,
+                source: CTimerSel::FfroClk,
                 powered: PoweredClock::AlwaysEnabled,
             },
             p.PIO0_5.reborrow(),
