@@ -680,12 +680,8 @@ impl ClockOperator<'_> {
         // the FFRO while it was driving the FlexSPI. Changing the CPU clock still seems to work
         // without causing (as loud) of glitches.
         match self.config.m4860_irc_select {
-            M4860IrcSelect::Off => {
-                Err(ClockError::bad_config("FFRO must be fixed at 48mhz"))
-            },
-            M4860IrcSelect::Mhz60(_powered_clock) => {
-                Err(ClockError::bad_config("FFRO must be fixed at 48mhz"))
-            },
+            M4860IrcSelect::Off => Err(ClockError::bad_config("FFRO must be fixed at 48mhz")),
+            M4860IrcSelect::Mhz60(_powered_clock) => Err(ClockError::bad_config("FFRO must be fixed at 48mhz")),
             M4860IrcSelect::Mhz48(powered_clock) => {
                 let good_powered = matches!(powered_clock, PoweredClock::AlwaysEnabled);
                 let good_pdrun = self.sysctl0.pdruncfg0().read().ffro_pd().bit_is_clear();
@@ -702,7 +698,7 @@ impl ClockOperator<'_> {
                 }
                 self.clocks._48_60m_irc = M4860IrcSelect::Mhz48(PoweredClock::AlwaysEnabled);
                 Ok(48_000_000)
-            },
+            }
         }
 
         // Old behavior, that naiively tries to modify the FFRO. Do NOT re-enable this
@@ -1567,8 +1563,7 @@ macro_rules! impl_perph_clk {
                 }
             }
 
-            fn clear_perph_reset
-    () {
+            fn clear_perph_reset() {
                 // SAFETY: unsafe needed to take pointers to Rstctl1 and Clkctl1
                 let rc1 = unsafe { pac::$rstctl::steal() };
 
@@ -1610,51 +1605,11 @@ impl_perph_clk!(ADC0, Clkctl0, pscctl1, Rstctl0, prstctl1, 16, AdcConfig);
 // TODO: Ensure that CASPER SRAM is also enabled prior to starting CASPER?
 impl_perph_clk!(CASPER, Clkctl0, pscctl0, Rstctl0, prstctl0, 9, UnimplementedConfig);
 impl_perph_clk!(CRC, Clkctl1, pscctl1, Rstctl1, prstctl1, 16, NoConfig);
-impl_perph_clk!(
-    CTIMER0,
-    Clkctl1,
-    pscctl2,
-    Rstctl1,
-    prstctl2,
-    0,
-    CtimerConfig
-);
-impl_perph_clk!(
-    CTIMER1,
-    Clkctl1,
-    pscctl2,
-    Rstctl1,
-    prstctl2,
-    1,
-    CtimerConfig
-);
-impl_perph_clk!(
-    CTIMER2,
-    Clkctl1,
-    pscctl2,
-    Rstctl1,
-    prstctl2,
-    2,
-    CtimerConfig
-);
-impl_perph_clk!(
-    CTIMER3,
-    Clkctl1,
-    pscctl2,
-    Rstctl1,
-    prstctl2,
-    3,
-    CtimerConfig
-);
-impl_perph_clk!(
-    CTIMER4,
-    Clkctl1,
-    pscctl2,
-    Rstctl1,
-    prstctl2,
-    4,
-    CtimerConfig
-);
+impl_perph_clk!(CTIMER0, Clkctl1, pscctl2, Rstctl1, prstctl2, 0, CtimerConfig);
+impl_perph_clk!(CTIMER1, Clkctl1, pscctl2, Rstctl1, prstctl2, 1, CtimerConfig);
+impl_perph_clk!(CTIMER2, Clkctl1, pscctl2, Rstctl1, prstctl2, 2, CtimerConfig);
+impl_perph_clk!(CTIMER3, Clkctl1, pscctl2, Rstctl1, prstctl2, 3, CtimerConfig);
+impl_perph_clk!(CTIMER4, Clkctl1, pscctl2, Rstctl1, prstctl2, 4, CtimerConfig);
 
 impl_perph_clk!(DMA0, Clkctl1, pscctl1, Rstctl1, prstctl1, 23, NoConfig);
 impl_perph_clk!(DMA1, Clkctl1, pscctl1, Rstctl1, prstctl1, 24, NoConfig);

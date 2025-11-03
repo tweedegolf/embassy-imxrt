@@ -5,10 +5,10 @@ use core::task::Poll;
 
 use embassy_sync::waitqueue::AtomicWaker;
 
-pub use crate::clocks::periph_helpers::CTimerSel;
 use crate::clocks::config::PoweredClock;
+pub use crate::clocks::periph_helpers::CTimerSel;
 use crate::clocks::periph_helpers::{CTimerInstance, CtimerConfig, NoConfig};
-use crate::clocks::{disable, enable_and_reset, ClockError, SysconPeripheral};
+use crate::clocks::{ClockError, SysconPeripheral, disable, enable_and_reset};
 use crate::interrupt::typelevel::Interrupt;
 use crate::iopctl::{DriveMode, DriveStrength, Inverter, IopctlPin as Pin, Pull, SlewRate};
 use crate::pwm::{CentiPercent, Hertz, MicroSeconds};
@@ -641,7 +641,6 @@ impl<'p, P: CaptureEvent> CaptureTimer<'p, Blocking, P> {
             powered: cfg.powered,
         })
         .unwrap();
-
 
         let _ = Self {
             id: COUNT_CHANNEL + module * CHANNEL_PER_MODULE + info.channel,
