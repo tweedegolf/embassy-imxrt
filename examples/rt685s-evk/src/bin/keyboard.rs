@@ -3,7 +3,6 @@
 
 use defmt::info;
 use embassy_executor::Spawner;
-use embassy_imxrt::clocks::delay_loop_clocks;
 use embassy_imxrt::gpio;
 use embassy_imxrt::gpio::{Input, Level, Output};
 use embassy_imxrt::iopctl::{DriveMode, DriveStrength, Inverter, Pull, SlewRate};
@@ -96,7 +95,7 @@ async fn main(spawner: Spawner) {
     let mut layout = Layout::new(&KEYMAP);
 
     loop {
-        for event in debouncer.events(matrix.get_with_delay(|| delay_loop_clocks(5, 250_000_000)).unwrap()) {
+        for event in debouncer.events(matrix.get_with_delay(|| cortex_m::asm::delay(1250)).unwrap()) {
             layout.event(event);
         }
 

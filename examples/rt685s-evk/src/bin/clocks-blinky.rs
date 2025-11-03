@@ -15,25 +15,25 @@ async fn main(_spawner: Spawner) {
     info!("Initializing GPIO");
     todo!();
 
-    // let mut led = gpio::Output::new(
-    //     embassy_p.PIO0_26,
-    //     gpio::Level::Low,
-    //     gpio::DriveMode::PushPull,
-    //     gpio::DriveStrength::Normal,
-    //     gpio::SlewRate::Standard,
-    // );
+    let mut led = gpio::Output::new(
+        embassy_p.PIO0_26,
+        gpio::Level::Low,
+        gpio::DriveMode::PushPull,
+        gpio::DriveStrength::Normal,
+        gpio::SlewRate::Standard,
+    );
 
-    // let clk_out = embassy_p.PIO1_10;
+    let clk_out = embassy_p.PIO1_10;
 
-    // clk_out
-    //     .disable_analog_multiplex()
-    //     .disable_input_buffer()
-    //     .set_drive_mode(embassy_imxrt::gpio::DriveMode::PushPull)
-    //     .set_drive_strength(embassy_imxrt::gpio::DriveStrength::Normal)
-    //     .set_input_inverter(embassy_imxrt::gpio::Inverter::Disabled)
-    //     .set_function(embassy_imxrt::gpio::Function::F7)
-    //     .set_slew_rate(embassy_imxrt::gpio::SlewRate::Standard)
-    //     .set_pull(embassy_imxrt::gpio::Pull::None);
+    clk_out
+        .disable_analog_multiplex()
+        .disable_input_buffer()
+        .set_drive_mode(embassy_imxrt::gpio::DriveMode::PushPull)
+        .set_drive_strength(embassy_imxrt::gpio::DriveStrength::Normal)
+        .set_input_inverter(embassy_imxrt::gpio::Inverter::Disabled)
+        .set_function(embassy_imxrt::gpio::Function::F7)
+        .set_slew_rate(embassy_imxrt::gpio::SlewRate::Standard)
+        .set_pull(embassy_imxrt::gpio::Pull::None);
 
     // let mut clk_out_config = clocks::ClockOutConfig::default_config();
     // if let Err(e) = clk_out_config.enable_and_reset() {
