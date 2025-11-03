@@ -642,14 +642,18 @@ impl<'p, P: CaptureEvent> CaptureTimer<'p, Blocking, P> {
         })
         .unwrap();
 
-        Self {
+
+        let _ = Self {
             id: COUNT_CHANNEL + module * CHANNEL_PER_MODULE + info.channel,
             event_clock_counts: 0,
             clk_freq: freq,
             _phantom: core::marker::PhantomData,
             info,
             event_pin: pin,
-        }
+        };
+
+        // See discussion in https://github.com/OpenDevicePartnership/embassy-imxrt/issues/486
+        todo!("This will hang because we haven't enabled the interrupt, we need to fix this some other way");
     }
 
     /// Waits synchronously for the capture timer
@@ -704,7 +708,51 @@ impl<'p, P: CaptureEvent> CaptureTimer<'p, Blocking, P> {
     }
 }
 
-impl<'p, M: Mode> CountingTimer<'p, M> {
+impl<'p> CountingTimer<'p, Async> {
+    /// Creates a new `CountingTimer` in asynchronous mode.
+    pub fn new_async<T: Instance>(
+        _timer: Peri<'_, T>,
+        inst: TimerChannelNum,
+        cfg: TimerConfig,
+        _irq: impl interrupt::typelevel::Binding<T::Interrupt, InterruptHandler<T>> + 'p,
+    ) -> Self {
+        let info = T::info().with_channel(inst);
+
+        let freq = enable_and_reset::<T>(&CtimerConfig {
+            source: cfg.source,
+            instance: T::TIMER_INST,
+            powered: cfg.powered,
+        })
+        .unwrap();
+
+        T::Interrupt::unpend();
+        unsafe { T::Interrupt::enable() };
+
+        Self {
+            id: info.module * CHANNEL_PER_MODULE + info.channel,
+            clk_freq: freq,
+            timeout: 0,
+            _phantom: core::marker::PhantomData,
+            info,
+        }
+    }
+
+    /// Waits asynchronously for the countdown timer to complete.
+    pub fn wait_us(&mut self, count_us: u32) -> impl Future<Output = ()> + use<'_, 'p> {
+        self.start_async(count_us);
+
+        // Implementation of waiting for the interrupt
+        poll_fn(|cx| {
+            // Register the waker
+            WAKERS[self.id].register(cx.waker());
+
+            if self.info.has_count_timer_expired() {
+                return Poll::Ready(());
+            }
+            Poll::Pending
+        })
+    }
+
     fn reset_and_enable(&self) {
         let reg = self.info.regs;
         if reg.tcr().read().cen().is_disabled() {
@@ -714,7 +762,7 @@ impl<'p, M: Mode> CountingTimer<'p, M> {
         }
     }
 
-    fn start(&mut self, count_us: u32) {
+    fn start_async(&mut self, count_us: u32) {
         let info = &self.info;
         let dur = (count_us as u64 * self.clk_freq as u64) / 1000000;
         let cycles = dur as u32;
@@ -747,52 +795,6 @@ impl<'p, M: Mode> CountingTimer<'p, M> {
     }
 }
 
-impl<'p> CountingTimer<'p, Async> {
-    /// Creates a new `CountingTimer` in asynchronous mode.
-    pub fn new_async<T: Instance>(
-        _timer: Peri<'_, T>,
-        inst: TimerChannelNum,
-        cfg: TimerConfig,
-        _irq: impl interrupt::typelevel::Binding<T::Interrupt, InterruptHandler<T>> + 'p,
-    ) -> Self {
-        let info = T::info().with_channel(inst);
-
-        let freq = enable_and_reset::<T>(&CtimerConfig {
-            source: cfg.source,
-            instance: T::TIMER_INST,
-            powered: cfg.powered,
-        })
-        .unwrap();
-
-        T::Interrupt::unpend();
-        unsafe { T::Interrupt::enable() };
-
-        Self {
-            id: info.module * CHANNEL_PER_MODULE + info.channel,
-            clk_freq: freq,
-            timeout: 0,
-            _phantom: core::marker::PhantomData,
-            info,
-        }
-    }
-
-    /// Waits asynchronously for the countdown timer to complete.
-    pub fn wait_us(&mut self, count_us: u32) -> impl Future<Output = ()> + use<'_, 'p> {
-        self.start(count_us);
-
-        // Implementation of waiting for the interrupt
-        poll_fn(|cx| {
-            // Register the waker
-            WAKERS[self.id].register(cx.waker());
-
-            if self.info.has_count_timer_expired() {
-                return Poll::Ready(());
-            }
-            Poll::Pending
-        })
-    }
-}
-
 impl<'p> CountingTimer<'p, Blocking> {
     /// Creates a new `CountingTimer` in blocking mode.
     pub fn new_blocking<T: Instance>(_timer: Peri<'p, T>, inst: TimerChannelNum, cfg: TimerConfig) -> Self {
@@ -805,9 +807,6 @@ impl<'p> CountingTimer<'p, Blocking> {
         })
         .unwrap();
 
-        T::Interrupt::unpend();
-        unsafe { T::Interrupt::enable() };
-
         Self {
             id: info.module * CHANNEL_PER_MODULE + info.channel,
             clk_freq: freq,
@@ -819,13 +818,56 @@ impl<'p> CountingTimer<'p, Blocking> {
 
     /// Waits synchronously for the countdown timer to complete.
     pub fn wait_us(&mut self, count_us: u32) {
-        self.start(count_us);
+        self.start_blocking(count_us);
 
-        loop {
-            if self.info.has_count_timer_expired() {
-                break;
+        // We have set MCR to stop the timer on match
+        while self.info.regs.tcr().read().cen().is_enabled() {}
+    }
+
+    fn reset_and_enable_blocking(&self) {
+        let reg = self.info.regs;
+        if reg.tcr().read().cen().is_disabled() {
+            reg.tcr().write(|w| w.crst().enabled());
+            reg.tcr().write(|w| w.crst().disabled());
+            reg.tcr().write(|w| w.cen().enabled());
+        }
+    }
+
+    fn start_blocking(&mut self, count_us: u32) {
+        let dur = (count_us as u64 * self.clk_freq as u64) / 1000000;
+        let cycles = dur as u32;
+        let reg = self.info.regs;
+        let channel = self.info.channel;
+        let curr_time = reg.tc().read().bits();
+        if dur > (u32::MAX) as u64 {
+            panic!("Count value is too large");
+        }
+
+        self.timeout = cycles;
+
+        if curr_time as u64 + cycles as u64 > u32::MAX as u64 {
+            let leftover = (curr_time as u64 + cycles as u64) - u32::MAX as u64;
+            let cycles = leftover as u32;
+            unsafe {
+                // SAFETY: It has no safety impact as we are writing new value to match register here
+                reg.mr(channel).write(|w| w.match_().bits(cycles));
+            }
+        } else {
+            unsafe {
+                //SAFETY: It has no safety impact as we are writing new value to match register here
+                reg.mr(channel).write(|w| w.match_().bits(curr_time + cycles));
             }
         }
+
+        match self.info.channel {
+            0 => reg.mcr().modify(|_r, w| w.mr0s().set_bit()),
+            1 => reg.mcr().modify(|_r, w| w.mr1s().set_bit()),
+            2 => reg.mcr().modify(|_r, w| w.mr2s().set_bit()),
+            3 => reg.mcr().modify(|_r, w| w.mr3s().set_bit()),
+            _ => unreachable!(),
+        };
+
+        self.reset_and_enable_blocking();
     }
 }
 

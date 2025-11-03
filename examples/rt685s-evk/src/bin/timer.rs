@@ -53,6 +53,7 @@ async fn main(spawner: Spawner) {
         Irqs,
     );
 
+    info!("Start!");
     tmr1.wait_us(3000000); // 3 seconds wait
     info!("First Counting timer expired");
 

@@ -635,7 +635,11 @@ impl SPConfHelper for AdcConfig {
             .modify(|_, w| w.halt().set_bit().reset().set_bit());
         // SAFETY: safe as long as the above is still true
         clkctl0.adc0fclkdiv().modify(|_, w| unsafe { w.div().bits(self.div) });
-        clkctl0.adc0fclkdiv().modify(|_, w| w.halt().clear_bit());
+        clkctl0.adc0fclkdiv().modify(|_, w| {
+            w.halt().clear_bit();
+            w.reset().clear_bit();
+            w
+        });
         while clkctl0.adc0fclkdiv().read().reqflag().bit_is_set() {}
 
         freq /= 1u32 + self.div as u32;
@@ -712,7 +716,11 @@ impl SPConfHelper for Sct0Config {
             clkctl0.sctfclkdiv().modify(|_, w| w.halt().set_bit().reset().set_bit());
             // SAFETY: safe as long as the above is still true
             clkctl0.sctfclkdiv().modify(|_, w| unsafe { w.div().bits(self.div) });
-            clkctl0.sctfclkdiv().modify(|_, w| w.halt().clear_bit());
+            clkctl0.sctfclkdiv().modify(|_, w| {
+                w.halt().clear_bit();
+                w.reset().clear_bit();
+                w
+            });
             while clkctl0.sctfclkdiv().read().reqflag().bit_is_set() {}
 
             freq /= 1u32 + self.div as u32;

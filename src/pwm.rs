@@ -33,7 +33,8 @@
 use crate::Peri;
 use crate::clocks::config::PoweredClock;
 use crate::clocks::disable;
-use crate::clocks::periph_helpers::{SCTClockSource, Sct0Config};
+pub use crate::clocks::periph_helpers::SCTClockSource;
+use crate::clocks::periph_helpers::Sct0Config;
 /// include pac definitions for instancing
 use crate::pac;
 
